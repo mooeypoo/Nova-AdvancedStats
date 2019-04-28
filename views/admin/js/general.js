@@ -154,7 +154,7 @@ $( document ).ready( function () {
 	$( '#tabs' ).tabs();
 	$( 'table.zebra tbody > tr:nth-child(odd)' ).addClass('alt');
 	$( '.ext-advancedStats-userstat-table' ).stupidtable();
-
+	$( '.ext-advancedStats-charstats-table' ).stupidtable();
 	// Events
 	$startDate.on( 'change', update );
 	$endDate.on( 'change', update );

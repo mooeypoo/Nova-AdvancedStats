@@ -27,6 +27,14 @@ class __extensions__AdvancedStats__Results extends CI_Controller {
 		echo json_encode( $this->resultManager->getUserStats( strtotime( $startTime ), strtotime( $endTime ) ) );
 	}
 
+	public function userchars( $startTime = 0, $endTime = 0 ) {
+		echo json_encode( $this->resultManager->getUserCharStats( strtotime( $startTime ), strtotime( $endTime ) ) );
+	}
+
+	public function charstats( $startTime = 0, $endTime = 0 ) {
+		echo json_encode( $this->resultManager->getAllCharStats( strtotime( $startTime ), strtotime( $endTime ) ) );
+	}
+
 	public function combined( $startTime = 0, $endTime = 0 ) {
 		$this->resultManager->setRecurrence( $this->statSystem->getRecurrence() );
 		echo json_encode( [

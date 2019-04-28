@@ -21,6 +21,7 @@ class ResultsManager {
 		$this->ci->load->model('characters_model', 'char');
 		$this->ci->load->model('personallogs_model', 'logs');
 		$this->ci->load->model('posts_model', 'posts');
+		$this->ci->load->model('positions_model', 'pos');
 		$this->ci->load->model('news_model', 'news');
 		$this->ci->load->model('settings_model', 'settings');
 
@@ -103,6 +104,14 @@ class ResultsManager {
 		return $this->getCountData( 'news', $start, $end, $status );
 	}
 
+	/**
+	 * Get user posting statistics
+	 *
+	 * @param  integer $start Start date. If not given, will calculate from the
+	 *  "beginning of time" (earliest that is available in the database)
+	 * @param  integer $end End date. If not given, will calculate up to today
+	 * @return array Object representing users with data associated with them for display
+	 */
 	public function getUserStats( $start = 0, $end = 0 ) {
 		// Get all users
 		$users = $this->ci->user->get_users();
@@ -122,9 +131,9 @@ class ResultsManager {
 			$requirement = now() - ( 86400 * $settings['posting_requirement'] );
 
 			$counts = [
-				'logs' => $this->getUserItemCount( 'logs', $p->userid, $start, $end ),
-				'news' => $this->getUserItemCount( 'news', $p->userid, $start, $end ),
-				'posts' => $this->getUserItemCount( 'posts', $p->userid, $start, $end ),
+				'logs' => $this->getItemCount( 'logs', $p->userid, $start, $end ),
+				'news' => $this->getItemCount( 'news', $p->userid, $start, $end ),
+				'posts' => $this->getItemCount( 'posts', $p->userid, $start, $end ),
 			];
 			$counts['total'] = (int)$counts['logs'] + (int)$counts['news'] + (int)$counts['posts'];
 			$leaderboard[ (int)$counts['total'] ] = (int)$p->userid;
@@ -156,25 +165,150 @@ class ResultsManager {
 		return $data;
 	}
 
-	protected function getUserItemCount( $type = 'posts', $id, $start = 0, $end = 0, $status = 'activated' ) {
+	public function getAllCharStats( $start = 0, $end = 0 ) {
+		$settings = $this->ci->settings->get_settings( [
+			'display_rank',
+			'posting_requirement',
+		] );
+		$requirement = now() - ( 86400 * $settings['posting_requirement'] );
+		$result = [];
+
+		$stasus = [ 'active', 'inactive', 'npc', 'pending' ];
+		foreach ( $stasus as $charstatus ) {
+			$characters = $this->ci->char->get_all_characters( $status );
+			foreach ( $characters->result() as $c ) {
+				$username = $this->ci->user->get_user( $c->user, 'name' );
+				if ( !$username ) {
+					$username = $this->ci->user->get_user( $c->user, 'email' );
+				}
+
+				// Count posts and divide to together vs alone
+				$charPosts = $this->getItemCount( 'posts', $c->charid, $start, $end, 'char', 'activated', false );
+				$countPosts = [ 'alone' => 0, 'with_others' => 0, 'total' => 0 ];
+				foreach ( $charPosts->result() as $prow ) {
+					$authors = explode( ',', $prow->post_authors );
+					if ( count( $authors ) > 1 ) {
+						$countPosts['with_others']++;
+					} else {
+						$countPosts['alone']++;
+					}
+					$countPosts['total']++;
+				}
+
+				$result[ $c->charid ] = [
+					'userid' => $c->user,
+					'name' => $this->ci->char->get_character_name( $c->charid, $settings['display_rank'] ),
+					'username' => $username,
+					'position_1' => $c->position_1 ? $this->ci->pos->get_position( $c->position_1, 'pos_name' ) : null,
+					'position_2' => $c->position_2 ? $this->ci->pos->get_position( $c->position_2, 'pos_name' ) : null,
+					'last_post' => timespan_short($c->last_post, now()),
+					'requirement_post' => ($c->last_post < $requirement) ? ' red' : '',
+					'counts' => [
+						'posts' => $countPosts,
+						'logs' => $this->getItemCount( 'logs', $c->charid, $start, $end, 'char' ),
+						'news' => $this->getItemCount( 'news', $c->charid, $start, $end, 'char' ),
+					],
+				];
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Get character statistics per users
+	 *
+	 * @param  integer $start Start date. If not given, will calculate from the
+	 *  "beginning of time" (earliest that is available in the database)
+	 * @param  integer $end End date. If not given, will calculate up to today
+	 * @return array Object representing users with their characters and post count per each
+	 */
+	public function getUserCharStats( $start = 0, $end = 0 ) {
+		$settings = $this->ci->settings->get_settings( [
+			'display_rank',
+		] );
+
+		$users = $this->ci->user->get_users();
+		$usersOnline = $this->ci->user->get_online_users();
+		$result = [];
+		foreach ( $users->result() as $u ) {
+			$stasus = [ 'active', 'inactive', 'npc', 'pending' ];
+			$result[ $u->userid ] = [
+				'name' => $u->name,
+				'online' => in_array( $u->userid, $usersOnline ),
+				'chars' => [],
+			];
+
+			$charnum = 0;
+			foreach ( $stasus as $charstatus ) {
+				$charQuery = $this->ci->char->get_user_characters( $u->userid, $charstatus );
+				$charnum += $charQuery->num_rows();
+				foreach ( $charQuery->result() as $row ) {
+					$result[ $u->userid ]['chars'][ $row->charid ] = [
+						'status' => $charstatus,
+						'name' => $this->ci->char->get_character_name( $row->charid, $settings['display_rank'] ),
+						'email' => $u->email,
+						'count' => $this->getItemCount( 'posts', $row->charid, $start, $end, 'char' ),
+					];
+				}
+			}
+
+			$result[$u->userid]['num'] = $charnum;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Get a count for requested items, for the user or character
+	 *
+	 * @param  string  $type Item type. 'posts', 'news' or 'logs'
+	 * @param  integer $id Character or user ID
+	 * @param  integer $start Start date. If not given, will calculate from the
+	 *  "beginning of time" (earliest that is available in the database)
+	 * @param  integer $end End date. If not given, will calculate up to today
+	 * @param  string  $who Who we are counting for. 'user' or 'char'. Defaults to 'user'
+	 * @param  string  $status Item status, 'activated', 'saved' or 'pending'. Defaults to 'activated'
+	 * @return integer Item count for the requested details
+	 */
+	protected function getItemCount( $type = 'posts', $id, $start = 0, $end = 0, $who = 'user', $status = 'activated', $isCount = true ) {
 		$this->setRange( $start, $end );
+
+
+		if ( $who === 'char' ) {
+			if ( $type === 'posts' ) {
+				$whereField = 'authors';
+			} else if ( $type === 'logs' || $type === 'news' ) {
+				$whereField = 'author_character';
+			} else {
+				$whereField = 'author';
+			}
+		} else {
+			if ( $type === 'posts' ) {
+				$whereField = 'authors_users';
+			} else if ( $type === 'logs' || $type === 'news' ) {
+				$whereField = 'author_user';
+			} else {
+				$whereField = 'author_user';
+			}
+		}
 
 		switch ( $type ) {
 			case 'logs':
 				$prefix = 'log_';
 				$table = 'personallogs';
-				$where = "(log_author_user = $id)";
+				$where = "({$prefix}{$whereField} = $id)";
 				break;
 			case 'news':
 				$prefix = 'news_';
 				$table = 'news';
-				$where = "(news_author_user = $id)";
+				$where = "({$prefix}{$whereField} = $id)";
 				break;
 			default:
 			case 'posts':
 				$prefix = 'post_';
 				$table = 'posts';
-				$where = "(post_authors_users LIKE '%,$id' OR post_authors_users LIKE '$id,%' OR post_authors_users LIKE '%,$id,%' OR post_authors_users = $id)";
+				$where = "({$prefix}{$whereField} LIKE '%,$id' OR {$prefix}{$whereField} LIKE '$id,%' OR {$prefix}{$whereField} LIKE '%,$id,%' OR {$prefix}{$whereField} = $id)";
 				break;
 		}
 
@@ -187,7 +321,7 @@ class ResultsManager {
 
 		$this->ci->db->where("($where)", null);
 
-		return $this->ci->db->count_all_results();
+		return $isCount ? $this->ci->db->count_all_results() : $this->ci->db->get();
 	}
 
 	/**
