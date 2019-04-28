@@ -1,0 +1,15 @@
+.ext-advancedStats-controls {
+	display: flex;
+}
+
+.ext-advancedStats-controls-date {
+	flex-grow: 1;
+}
+
+.ext-advancedStats-title {
+	margin: 1em 0;
+}
+.ext-advancedStats-title-text {
+	font-size: 150%;
+	padding-right: 0.5em;
+}

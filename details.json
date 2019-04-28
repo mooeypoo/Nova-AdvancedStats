@@ -1,0 +1,11 @@
+{
+	"name": "Advanced Stats",
+	"version": "1.0.0",
+	"description": "Provides admins some extended statistics about the activity in nova.",
+	"url": "https://github.com/mooeypoo/Nova-AdvancedStats",
+	"author": {
+		"name": "Moriel Schottlender",
+		"email": "mooeypoo@gmail.com",
+		"url": "http://moriel.smarterthanthat.com/"
+	}
+}
