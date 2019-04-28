@@ -83,8 +83,10 @@ class __extensions__AdvancedStats__Show extends Nova_controller_main {
 			'<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.css">',
 			'<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>',
 			// Datepicker
-			'<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/black-tie/jquery-ui.css">',
-			'<script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>',
+			$this->extension['AdvancedStats']->inline_js('jquery-ui-datepicker.min','admin'),
+			$this->extension['AdvancedStats']->inline_css('jquery.ui.datepicker', 'admin'),
+			$this->extension['AdvancedStats']->inline_css('jquery.ui.theme', 'admin'),
+			// '<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/black-tie/jquery-ui.css">',
 			// Extension JS
 			$this->extension['AdvancedStats']->inline_js('general','admin'),
 			$this->extension['AdvancedStats']->inline_js('lib.jscolor','admin'),

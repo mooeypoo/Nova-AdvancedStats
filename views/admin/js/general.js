@@ -23,10 +23,26 @@ $( document ).ready( function () {
 			end: $container.data( 'date-end' )
 		},
 		$startDate = $( '#ext-advancedStats-date-start' ).datepicker( {
-			dateFormat: dateFormat
+			dateFormat: dateFormat,
+			beforeShow: function () {
+				var $datepicker = $('#ui-datepicker-div');
+				if ( !$datepicker.parent().hasClass( 'ext-advancedStats-datepicker' ) ) {
+					$('#ui-datepicker-div').wrap(
+						$('<div>').addClass( 'ext-advancedStats-datepicker' )
+					);
+				}
+			}
 		} ),
 		$endDate = $( '#ext-advancedStats-date-end' ).datepicker( {
-			dateFormat: dateFormat
+			dateFormat: dateFormat,
+			beforeShow: function () {
+				var $datepicker = $('#ui-datepicker-div');
+				if ( !$datepicker.parent().hasClass( 'ext-advancedStats-datepicker' ) ) {
+					$('#ui-datepicker-div').wrap(
+						$('<div>').addClass( 'ext-advancedStats-datepicker' )
+					);
+				}
+			}
 		} ),
 		chart = new Chart(ctx, {
 			type: 'line',
@@ -133,8 +149,11 @@ $( document ).ready( function () {
 				);
 		};
 
+	// Initialization
 	$container.toggle( false );
-	$('table.zebra tbody > tr:nth-child(odd)').addClass('alt');
+	$( '#tabs' ).tabs();
+	$( 'table.zebra tbody > tr:nth-child(odd)' ).addClass('alt');
+	$( '.ext-advancedStats-userstat-table' ).stupidtable();
 
 	// Events
 	$startDate.on( 'change', update );
@@ -145,8 +164,6 @@ $( document ).ready( function () {
 				$.facebox(data);
 			} );
 	} );
-
-	$( '.ext-advancedStats-userstat-table' ).stupidtable();
 
 	// Initial values
 	update();
