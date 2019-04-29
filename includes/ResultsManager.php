@@ -136,7 +136,7 @@ class ResultsManager {
 				'posts' => $this->getItemCount( 'posts', $p->userid, $start, $end ),
 			];
 			$counts['total'] = (int)$counts['logs'] + (int)$counts['news'] + (int)$counts['posts'];
-			$leaderboard[ (int)$counts['total'] ] = (int)$p->userid;
+			$leaderboard[ $p->userid ] = (int)$counts['total'];
 
 			$data['users'][$p->userid] = array(
 				'name' => $p->name,
@@ -158,8 +158,8 @@ class ResultsManager {
 			);
 		}
 
-		// Sort in reverse order; keys are total counts
-		krsort( $leaderboard );
+		// Sort in reverse order; values are total counts
+		arsort( $leaderboard );
 		$data['leaderboard'] = $leaderboard;
 
 		return $data;
