@@ -130,7 +130,7 @@ $( document ).ready( function () {
 						$container.toggle( false );
 					}
 				);
-			// Graph
+			// User stats
 			$.getJSON( url + '/Results/userstats/' + start + '/' + end )
 				.then(
 					function ( results ) {
@@ -147,14 +147,44 @@ $( document ).ready( function () {
 						$container.toggle( false );
 					}
 				);
+			// Character stats
+			$.getJSON( url + '/Results/charstats/' + start + '/' + end )
+				.then(
+					function ( results ) {
+						$( '.ext-advancedStats-charstats-count' ).each( function () {
+							var cid = $( this ).data( 'charid' ),
+								type = $( this ).data( 'type' );
+
+								if ( type === 'posts_alone' ) {
+									value = results[cid].counts.posts.alone;
+								} else if ( type === 'posts_with_others' ) {
+									value = results[cid].counts.posts.with_others;
+								} else if ( type === 'posts_total' ) {
+									value = results[cid].counts.posts.total;
+								} else {
+									value = results[cid].counts[type];
+								}
+
+							$( this ).text( value );
+						} );
+					},
+					function () { // Failure
+						console.log( 'err', arguments );
+						$container.toggle( false );
+					}
+				);
+
+			// Redo sorting
+
 		};
 
 	// Initialization
 	$container.toggle( false );
 	$( '#tabs' ).tabs();
+	$( '#sub_tabs' ).tabs();
 	$( 'table.zebra tbody > tr:nth-child(odd)' ).addClass('alt');
-	$( '.ext-advancedStats-userstat-table' ).stupidtable();
-	$( '.ext-advancedStats-charstats-table' ).stupidtable();
+	$( '.ext-advancedStats-sortable' ).stupidtable();
+
 	// Events
 	$startDate.on( 'change', update );
 	$endDate.on( 'change', update );

@@ -2,7 +2,9 @@
 	margin-top: 1em;
 	display: none;
 }
-
+.ext-advancedStats-sortable th {
+	cursor: pointer;
+}
 .ext-advancedStats-controls {
 	margin-top: 1em;
 	display: flex;

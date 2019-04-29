@@ -173,9 +173,9 @@ class ResultsManager {
 		$requirement = now() - ( 86400 * $settings['posting_requirement'] );
 		$result = [];
 
-		$stasus = [ 'active', 'inactive', 'npc', 'pending' ];
-		foreach ( $stasus as $charstatus ) {
-			$characters = $this->ci->char->get_all_characters( $status );
+		$status = [ 'active', 'inactive', 'npc', 'pending' ];
+		foreach ( $status as $charstatus ) {
+			$characters = $this->ci->char->get_all_characters( $charstatus );
 			foreach ( $characters->result() as $c ) {
 				$username = $this->ci->user->get_user( $c->user, 'name' );
 				if ( !$username ) {
@@ -199,8 +199,11 @@ class ResultsManager {
 					'userid' => $c->user,
 					'name' => $this->ci->char->get_character_name( $c->charid, $settings['display_rank'] ),
 					'username' => $username,
-					'position_1' => $c->position_1 ? $this->ci->pos->get_position( $c->position_1, 'pos_name' ) : null,
-					'position_2' => $c->position_2 ? $this->ci->pos->get_position( $c->position_2, 'pos_name' ) : null,
+					'positions' => [
+						1 => $c->position_1 ? $this->ci->pos->get_position( $c->position_1, 'pos_name' ) : null,
+					 	2 => $c->position_2 ? $this->ci->pos->get_position( $c->position_2, 'pos_name' ) : null,
+					],
+					'status' => $charstatus,
 					'last_post' => timespan_short($c->last_post, now()),
 					'requirement_post' => ($c->last_post < $requirement) ? ' red' : '',
 					'counts' => [
