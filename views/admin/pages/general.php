@@ -39,8 +39,8 @@
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ($userstats['leaderboard'] as $leadid) : ?>
-							<?php 	$u = $userstats['users'][$leadid]; ?>
+						<?php foreach ($userstats['leaderboard'] as $leadid => $counts ) : ?>
+							<?php 	$u = $userstats['users'][$leadid];?>
 							<tr class="userstats-user" data-userid="<?php echo $u['id'];?>">
 								<td class="col_40pct">
 									<strong class="fontMedium"><?php echo $u['name'];?></strong><br />

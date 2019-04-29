@@ -17,19 +17,28 @@ class __extensions__AdvancedStats__Show extends Nova_controller_main {
 		$this->_regions['nav_sub'] = Menu::build('adminsub', 'report');
 	}
 
-	public function general() {
+	public function general( $start = 0, $end = 0 ) {
 		Auth::check_access( 'report/activity' );
 
-		$base = strtotime(date('Y-m-d',time()) . '-01 00:00:01');
+		if ( !$start ) {
+			$base = strtotime(date('Y-m-d',time()) . '-01 00:00:01');
+			$start = strtotime('-1 month', $base );
+		} else {
+			$start = strtotime( $start );
+		}
+		if ( !$end ) {
+			$end = time();
+		} else {
+			$end = strtotime( $end );
+		}
 		$dates = [
-			'start' => strtotime('-1 month', $base ),
-			'end' => time(),
+			'start' => $start,
+			'end' => $end,
 		];
 		$dates['display'] =[
 			'start' => $this->resultsManager->getHumanReadableDate( $dates['start'] ),
 			'end' => $this->resultsManager->getHumanReadableDate( $dates['end'] ),
 		];
-
 		$data = [
 			'header' => 'Advanced Statistics',
 			'labels' => [
